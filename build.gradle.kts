@@ -121,7 +121,7 @@ project(":"){
     val jar = tasks.named<Jar>("jar"){
         archiveFileName = "${modArtifact}Desktop.jar"
 
-        val meta = layout.projectDirectory.file("$temporaryDir/mod.json")
+        val meta = layout.projectDirectory.file("$temporaryDir/mod.hjson")
         from(
             files(sourceSets["main"].output.classesDirs),
             files(sourceSets["main"].output.resourcesDir),
@@ -137,14 +137,19 @@ project(":"){
             // Deliberately check if the mod meta is actually written in HJSON, since, well, some people actually use
             // it. But this is also not mentioned in the `README.md`, for the mischievous reason of driving beginners
             // into using JSON instead.
-            val metaJson = layout.projectDirectory.file("mod.json")
+            //nope
+
+            val metaJson = layout.projectDirectory.file("mod.hjson")
             val metaHjson = layout.projectDirectory.file("mod.hjson")
 
+            /*
             if(metaJson.asFile.exists() && metaHjson.asFile.exists()){
-                throw IllegalStateException("Ambiguous mod meta: both `mod.json` and `mod.hjson` exist.")
+                throw IllegalStateException("Ambiguous mod meta: both `mod.hjson` and `mod.hjson` exist.")
             }else if(!metaJson.asFile.exists() && !metaHjson.asFile.exists()){
-                throw IllegalStateException("Missing mod meta: neither `mod.json` nor `mod.hjson` exist.")
+                throw IllegalStateException("Missing mod meta: neither `mod.hjson` nor `mod.hjson` exist.")
             }
+
+             */
 
             val isJson = metaJson.asFile.exists()
             val map = (if(isJson) metaJson else metaHjson).asFile

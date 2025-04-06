@@ -1,0 +1,7 @@
+displayName: m m m m m
+description: Randomass mod
+version: v1.0
+minGameVersion: 146
+author: You
+java: true
+main: florafest.Florafest

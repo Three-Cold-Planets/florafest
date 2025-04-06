@@ -1,9 +1,9 @@
-package template;
+package florafest;
 
 import mindustry.mod.*;
-import template.gen.*;
+import florafest.gen.*;
 
-public class ModTemplate extends Mod{
+public class Florafest extends Mod{
     @Override
     public void loadContent(){
         EntityRegistry.register();
