@@ -1,7 +1,7 @@
 import arc.files.*
 import arc.util.*
 import arc.util.serialization.*
-import ent.*
+//import ent.*
 import java.io.*
 
 buildscript{
@@ -20,7 +20,7 @@ buildscript{
 
 plugins{
     java
-    id("com.github.GglLfr.EntityAnno") apply false
+    //id("com.github.GglLfr.EntityAnno") apply false
 }
 
 val arcVersion: String by project
@@ -98,6 +98,7 @@ allprojects{
 }
 
 project(":"){
+    /*
     apply(plugin = "com.github.GglLfr.EntityAnno")
     configure<EntityAnnoExtension>{
         modName = project.properties["modName"].toString()
@@ -109,10 +110,16 @@ project(":"){
         genPackage = modGen
     }
 
+     */
+
     dependencies{
         // Use the entity generation annotation processor.
+        //Or don't
+        /*
         compileOnly(entity(":entity"))
         add("kapt", entity(":entity"))
+
+         */
 
         compileOnly(mindustry(":core"))
         compileOnly(arc(":arc-core"))
