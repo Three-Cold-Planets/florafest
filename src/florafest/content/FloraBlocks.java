@@ -6,12 +6,27 @@ import mindustry.content.Items;
 import mindustry.content.Liquids;
 import mindustry.type.Category;
 import mindustry.world.Block;
+import mindustry.world.blocks.storage.CoreBlock;
 
 import static mindustry.type.ItemStack.with;
 
 public class FloraBlocks {
-    public static Block pump;
+    public static Block
+            //Cores
+            coreCentral,
+
+            pump;
+
     public static void load(){
+
+        coreCentral = new CoreBlock("core-central"){{
+            requirements(
+                    Category.effect, with(FloraItems.matter, 4000)
+            );
+
+            itemCapacity = 400;
+            alwaysUnlocked = true;
+        }};
 
         pump = new ItemPump("pump"){{
             drops = Seq.with(

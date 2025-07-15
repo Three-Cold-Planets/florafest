@@ -5,6 +5,7 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
 import arc.math.Interp;
+import arc.math.Mathf;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Tmp;
@@ -193,11 +194,8 @@ public class ItemPump extends Block {
 
 
             for(Tile other : tile.getLinkedTilesAs(block, tempTiles)){
-                Log.info(other.floor().liquidDrop);
                 if(other.floor().liquidDrop == null) continue;
-                Log.info("continuing!");
                 if (!ItemPump.canPump(other) || (liquidDrop != null && other.floor().liquidDrop != liquidDrop)) {
-                    Log.info("fuck");
                     Fx.explosion.at(other.worldx(), other.worldy());
                     liquidDrop = null;
                     return;
