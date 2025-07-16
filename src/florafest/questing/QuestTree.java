@@ -52,8 +52,8 @@ public class QuestTree {
     public static class NodeData{
         public float x;
         public float y;
-        public String name;
-        public Seq<String> connections = Seq.with();
+        //public String name;
+        //public Seq<String> connections = Seq.with();
     }
 
     public Seq<NodeData> outputData(){

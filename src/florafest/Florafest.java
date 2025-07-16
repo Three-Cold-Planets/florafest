@@ -30,6 +30,8 @@ public class Florafest extends Mod{
         Events.on(EventType.FileTreeInitEvent.class, e -> {
             Core.app.post(ModShaders::load);
             MOD = Vars.mods.getMod(NAME);
+
+            QuestLoader.test();
         });
     }
 

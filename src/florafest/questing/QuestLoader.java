@@ -7,13 +7,14 @@ import arc.util.Log;
 import arc.util.io.Writes;
 import arc.util.serialization.Json;
 import arc.util.serialization.JsonValue;
+import mindustry.Vars;
 
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
 public class QuestLoader {
-    public static Fi workingDir = new Fi("C:\\Users\\Sh1p\\AppData\\Roaming\\Mindustry\\questing");
+    public static Fi workingDir = Vars.dataDirectory.child("questing");
 
     public static Json j = new Json(){
         private <T> T internalRead(Class<T> type, Class elementType, JsonValue jsonData, Class keyType) {
@@ -39,11 +40,12 @@ public class QuestLoader {
     }};
 
     public static void test(){
-        TestingObject output = j.fromJson(TestingObject.class, workingDir.child("test.json"));
-        Log.info(output.name);
+        TestingObject2 saving = new TestingObject2(Seq.with(69, 1337));
+        j.toJson(saving, TestingObject2.class, workingDir.child("test.json"));
 
-        TestingObject saving = new TestingObject("hewo :3");
-        j.toJson(saving, TestingObject.class, workingDir.child("output.json"));
+        TestingObject2 output = j.fromJson(TestingObject2.class, workingDir.child("test.json"));
+        Log.info(output.stuff);
+
     }
 
     public static void save(QuestTree tree){
@@ -66,6 +68,19 @@ public class QuestLoader {
         }
 
         public String name = "";
+    }
+    public static class TestingObject2{
+
+        //Just for json
+        public TestingObject2(){
+
+        }
+
+        public TestingObject2(Seq<Integer> stuff){
+            this.stuff = stuff;
+        }
+
+        public Seq<Integer> stuff = new Seq<>();
     }
 
     private interface FieldParser{
