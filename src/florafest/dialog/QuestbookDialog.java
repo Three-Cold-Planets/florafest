@@ -2,27 +2,33 @@ package florafest.dialog;
 
 import arc.Core;
 import arc.Events;
-import arc.graphics.g2d.Fill;
+import arc.graphics.Color;
 import arc.input.KeyCode;
 import arc.math.Mathf;
+import arc.scene.Element;
 import arc.scene.Group;
 import arc.scene.actions.Actions;
 import arc.scene.event.ElementGestureListener;
 import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
+import arc.scene.event.Touchable;
+import arc.scene.style.Drawable;
 import arc.scene.ui.Button;
+import arc.scene.ui.Image;
 import arc.scene.ui.ImageButton;
+import arc.scene.ui.TextButton;
+import arc.scene.ui.layout.Cell;
 import arc.util.*;
 import florafest.Florafest;
 import florafest.content.FloraBlocks;
+import florafest.questing.QuestLoader;
+import florafest.questing.QuestTree;
 import mindustry.content.Blocks;
-import mindustry.content.TechTree;
 import mindustry.game.EventType;
+import mindustry.gen.Icon;
 import mindustry.gen.Sounds;
-import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
-import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustry.ui.dialogs.ResearchDialog;
 import mindustry.ui.dialogs.ResearchDialog.TechTreeNode;
 
 import mindustry.Vars;
@@ -41,6 +47,8 @@ public class QuestbookDialog extends BaseDialog {
     public View view;
 
     public ItemsDisplay itemDisplay;
+
+    public boolean deleting;
 
     public QuestbookDialog(){
         super("I am going absolutely insane");
@@ -129,6 +137,7 @@ public class QuestbookDialog extends BaseDialog {
 
         margin(0f).marginBottom(8);
 
+
         cont.stack(titleTable, view = new View(), itemDisplay = new ItemsDisplay()).grow();
         itemDisplay.visible(() -> !net.client());
 
@@ -136,10 +145,47 @@ public class QuestbookDialog extends BaseDialog {
 
         addCloseButton();
 
-        shown(() -> {
-            Sounds.wind3.play();
+
+        buttons.button("@add", Icon.left, () -> {
+            QuestTree.QuestNode node = new QuestTree.QuestNode();
+            quest.all.add(node);
+            view.addNode(node);
+        }).size(width, 64);
+
+        Button deleteButton = new Button(Icon.left);
+        deleteButton.label(() -> deleting ? "Deleting: <Y>" : "Deleting: <N>").pad(4).padBottom(0).wrap().growX();
+        deleteButton.clicked(() -> {
+            deleting = !deleting;
         });
 
+        buttons.button(("@save"), () -> {
+            QuestLoader.save(quest);
+        }).size(width, 64);
+
+        buttons.button(("@load"), () -> {
+            QuestLoader.load(quest);
+        }).size(width, 64);
+
+        shown(() -> {
+            Sounds.wind3.play();
+            view.rebuildAll();
+        });
+
+        addListener(new InputListener() {
+            public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
+                view.setScale(Mathf.clamp(view.scaleX - amountY / 10.0F * view.scaleX, 0.25F, 1.0F));
+                view.setOrigin(1);
+                view.setTransform(true);
+                return true;
+            }
+
+            public boolean mouseMoved(InputEvent event, float x, float y) {
+                view.requestScroll();
+                return super.mouseMoved(event, x, y);
+            }
+        });
+
+        touchable = Touchable.enabled;
         addCaptureListener(new ElementGestureListener() {
             @Override
             public void zoom(InputEvent event, float initialDistance, float distance) {
@@ -154,11 +200,6 @@ public class QuestbookDialog extends BaseDialog {
             }
 
             @Override
-            public void touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                super.touchDown(event, x, y, pointer, button);
-            }
-
-            @Override
             public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                 view.lastZoom = view.scaleX;
                 hovered = null;
@@ -169,8 +210,8 @@ public class QuestbookDialog extends BaseDialog {
                 if(view.canDrag == false) return;
                 if(hovered != null){
 
-                    hovered.x += deltaX / view.scaleX;
-                    hovered.y += deltaY / view.scaleY;
+                    hovered.data.x += deltaX / view.scaleX;
+                    hovered.data.y += deltaY / view.scaleY;
 
                     return;
                 }
@@ -201,48 +242,53 @@ public class QuestbookDialog extends BaseDialog {
         public void rebuildAll(){
             clear();
 
-            if(quest != null) quest.all.each(node -> {
-
-                ImageButton button = new ImageButton(Blocks.duo.uiIcon, new ImageButton.ImageButtonStyle());
-                button.resizeImage(32f * 2);
-                button.getImage().setScaling(Scaling.fit);
-
-                button.update(() -> {
-                    float offset = (Core.graphics.getHeight() % 2) / 2f;
-
-                    button.setPosition(node.x / view.scaleX + panX + width / 2f, node.y / view.scaleY + panY + height / 2f + offset, Align.center);
-
-                    button.getImage().layout();
-
-                    //Log.info(Strings.format("Button X: @, Y: @"), button.x, button.y);
-
-                    //Log.info(Strings.format("Dialog X: @, Y: @"), x, y);
-                });
-
-                button.hovered(() -> {
-                    //if(button.isPressed()) canDrag = false;
-
-                    button.color.hue(Time.time);
-
-                    if(button.isPressed()) {
-                        hovered = node;
-                        button.toFront();
-                    }
-                });
-
-                button.clicked(() -> {
-
-                });
-
-                node.button = button;
-                addChild(button);
-            });
+            if(quest != null) quest.all.each(this::addNode);
 
 
 
             setOrigin(Align.center);
             setTransform(true);
             released(() -> moved = false);
+        }
+
+        public void addNode(QuestTree.QuestNode node){
+            ImageButton button = new ImageButton(Blocks.duo.uiIcon, new ImageButton.ImageButtonStyle());
+            button.resizeImage(32f * 2);
+            button.getImage().setScaling(Scaling.fit);
+
+            button.update(() -> {
+                float offset = (Core.graphics.getHeight() % 2) / 2f;
+
+                button.setPosition(node.data.x + panX + width / 2f, node.data.y + panY + height / 2f + offset, Align.center);
+
+                button.getImage().layout();
+
+                //Log.info(Strings.format("Button X: @, Y: @"), button.x, button.y);
+
+                //Log.info(Strings.format("Dialog X: @, Y: @"), x, y);
+            });
+
+            button.hovered(() -> {
+                //if(button.isPressed()) canDrag = false;
+
+                if(button.isPressed()) {
+                    if(deleting){
+                        quest.all.remove(node);
+                        view.removeChild(button);
+                        rebuildAll();
+                        return;
+                    }
+
+                    hovered = node;
+                    button.toFront();
+                }
+            });
+
+            button.clicked(() -> {
+            });
+
+            node.button = button;
+            addChild(button);
         }
 
         @Override

@@ -1,8 +1,7 @@
 package florafest.content;
 
-import florafest.dialog.QuestTree;
+import florafest.questing.QuestTree;
 import mindustry.content.TechTree;
-import mindustry.ui.dialogs.ResearchDialog;
 
 public class FloraQuests extends QuestTree {
     public FloraQuests(TechTree.TechNode root) {
@@ -10,7 +9,7 @@ public class FloraQuests extends QuestTree {
 
         all.addAll(
                 new QuestNode(){{
-                    x = 50;
+                    setPos(50, 0);
                 }},
                 new QuestNode()
         );

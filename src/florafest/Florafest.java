@@ -9,6 +9,8 @@ import florafest.content.FloraQuests;
 import florafest.content.FloraTechTree;
 import florafest.dialog.FloraUI;
 import florafest.graphics.ModShaders;
+import florafest.questing.QuestLoader;
+import florafest.questing.QuestTree;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.mod.*;
@@ -20,6 +22,7 @@ public class Florafest extends Mod{
 
     public Mods.LoadedMod MOD;
     public static String NAME = "florafest";
+    public static QuestTree quests;
 
     public static FloraUI ui;
 
@@ -36,7 +39,7 @@ public class Florafest extends Mod{
         FloraItems.load();
         FloraBlocks.load();
         FloraTechTree.load();
-        new FloraQuests(FloraTechTree.root);
+        quests = new FloraQuests(FloraTechTree.root);
     }
 
     @Override
@@ -46,7 +49,8 @@ public class Florafest extends Mod{
 
         Seq<String> packages = Seq.with(
                 "florafest",
-                "florafest.content"
+                "florafest.content",
+                "florafest.questing"
         );
 
         packages.each(name -> {
