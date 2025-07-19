@@ -2,8 +2,13 @@ package florafest.dialog;
 
 import arc.Core;
 import arc.Events;
+import arc.Input;
 import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Fill;
+import arc.graphics.g2d.Lines;
 import arc.input.KeyCode;
+import arc.math.Angles;
 import arc.math.Mathf;
 import arc.scene.Element;
 import arc.scene.Group;
@@ -27,6 +32,7 @@ import mindustry.content.Blocks;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
 import mindustry.gen.Sounds;
+import mindustry.graphics.Drawf;
 import mindustry.graphics.Pal;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.ResearchDialog.TechTreeNode;
@@ -48,7 +54,25 @@ public class QuestbookDialog extends BaseDialog {
 
     public ItemsDisplay itemDisplay;
 
-    public boolean deleting;
+    public boolean editor;
+    public DialogState state = DialogState.regular;
+
+    public static class DialogState{
+        boolean dragButtons;
+        boolean dragBackground;
+
+        public DialogState(boolean dragButtons, boolean dragBackground){
+
+            this.dragButtons = dragButtons;
+            this.dragBackground = dragBackground;
+        }
+
+        public static DialogState
+
+        regular = new DialogState(true, true),
+        deleting = new DialogState(false, true),
+        connecting = new DialogState(false, true);
+    }
 
     public QuestbookDialog(){
         super("I am going absolutely insane");
@@ -153,10 +177,21 @@ public class QuestbookDialog extends BaseDialog {
         }).size(width, 64);
 
         Button deleteButton = new Button(Icon.left);
-        deleteButton.label(() -> deleting ? "Deleting: <Y>" : "Deleting: <N>").pad(4).padBottom(0).wrap().growX();
+        deleteButton.label(() -> state == DialogState.deleting ? "Deleting: <Y>" : "Deleting: <N>").pad(4).padBottom(0).wrap().growX();
         deleteButton.clicked(() -> {
-            deleting = !deleting;
+            if(state == DialogState.deleting) state = DialogState.regular;
+            else state = DialogState.deleting;
         });
+
+        buttons.add(deleteButton);
+
+        Button editorButton = new Button(Icon.left);
+        editorButton.label(() -> editor ? "Editing: <Y>" : "Editing: <N>").pad(4).padBottom(0).wrap().growX();
+        editorButton.clicked(() -> {
+            editor = !editor;
+        });
+
+        buttons.add(editorButton);
 
         buttons.button(("@save"), () -> {
             QuestLoader.save(quest);
@@ -164,6 +199,7 @@ public class QuestbookDialog extends BaseDialog {
 
         buttons.button(("@load"), () -> {
             QuestLoader.load(quest);
+            view.rebuildAll();
         }).size(width, 64);
 
         shown(() -> {
@@ -190,9 +226,7 @@ public class QuestbookDialog extends BaseDialog {
             @Override
             public void zoom(InputEvent event, float initialDistance, float distance) {
                 Log.info("Zoomies! " + distance);
-                if (view.lastZoom < 0) {
-                    view.lastZoom = view.scaleX;
-                }
+                view.lastZoom = view.scaleX;
 
                 view.setScale(Mathf.clamp(distance / initialDistance * view.lastZoom, 0.25f, 1f));
                 view.setOrigin(Align.center);
@@ -207,14 +241,17 @@ public class QuestbookDialog extends BaseDialog {
 
             @Override
             public void pan(InputEvent event, float x, float y, float deltaX, float deltaY) {
-                if(view.canDrag == false) return;
+
                 if(hovered != null){
 
-                    hovered.data.x += deltaX / view.scaleX;
-                    hovered.data.y += deltaY / view.scaleY;
-
+                    if(view.canDrag()){
+                        hovered.data.x += deltaX / view.scaleX;
+                        hovered.data.y += deltaY / view.scaleY;
+                    }
                     return;
                 }
+
+                if(!state.dragBackground) return;
 
                 view.panX += deltaX / view.scaleX;
                 view.panY += deltaY / view.scaleY;
@@ -233,7 +270,10 @@ public class QuestbookDialog extends BaseDialog {
         public float panX = 0, panY = -200, lastZoom = -1;
         public boolean moved = false;
 
-        public boolean canDrag = true;
+        //Only for buttons
+        public boolean canDrag(){
+            return state.dragButtons && editor;
+        };
 
         {
             rebuildAll();
@@ -272,7 +312,7 @@ public class QuestbookDialog extends BaseDialog {
                 //if(button.isPressed()) canDrag = false;
 
                 if(button.isPressed()) {
-                    if(deleting){
+                    if(state == DialogState.deleting){
                         quest.all.remove(node);
                         view.removeChild(button);
                         rebuildAll();
@@ -292,11 +332,47 @@ public class QuestbookDialog extends BaseDialog {
         }
 
         @Override
-        protected void drawChildren() {
-            super.drawChildren();
+        public void drawChildren() {
+            Draw.sort(true);
+            float offsetX = panX + width / 2f, offsetY = panY + height / 2f;
+            int maxDepth = 10;
+            float spacing = 500; // same as layout spacing
 
-            float offset = (Core.graphics.getHeight() % 2) / 2f;
-            //Fill.rect();
+            Draw.z(0f);
+
+
+            for(int i = 1; i <= maxDepth; i++){
+                float radius = spacing * i;
+                float cx = panX + width / 2f;
+                float cy = panY + height / 2f;
+
+                Draw.color(Pal.darkerGray);
+                Lines.stroke(12f);
+                Lines.circle(cx, cy, radius);
+
+                // Dashed echo rings — apply parallax scaling
+                for(int e = 1; e <= 3; e++){
+                    float parallax = 1f / (e + 1f);
+                    float px = panX * parallax + width / 2f;
+                    float py = panY * parallax + height / 2f;
+
+                    Draw.color(Pal.darkestGray.a(1f / (e * 1.5f)));
+                    Lines.stroke(10f / e);
+
+                    Lines.dashCircle(px, py, radius);
+                }
+            }
+            Draw.color();
+
+            //Tmp.v1.set(Core.input.mouse()).sub(Core.graphics.getWidth()/2, Core.graphics.getHeight()/2).scl(width/Core.graphics.getWidth(), height/Core.graphics.getHeight()).scl(1/scaleX, 1/scaleY);
+            Tmp.v1.set(Core.scene.stageToScreenCoordinates(Core.input.mouse()));
+            Fill.circle((Tmp.v1.x + width/2), (Tmp.v1.y + height/2), 40 * scaleX);
+
+
+
+            Draw.sort(false);
+            Draw.reset();
+            super.drawChildren();
         }
     }
 }

@@ -6,15 +6,20 @@ import arc.scene.ui.Button;
 import arc.struct.Seq;
 import mindustry.content.TechTree;
 
+import java.util.UUID;
+
 public class QuestTree {
+    public String name;
+
     private static QuestNode context = null;
 
     public static Seq<QuestTree> allTrees = Seq.with();
 
     public Seq<QuestNode> all = Seq.with();
 
-    public QuestTree(TechTree.TechNode root){
+    public QuestTree(String name, TechTree.TechNode root){
         this.root = root;
+        this.name = name;
         allTrees.add(this);
     }
 
@@ -50,10 +55,15 @@ public class QuestTree {
     }
 
     public static class NodeData{
+
+        public NodeData(){
+            name = UUID.randomUUID().toString();
+        }
+
         public float x;
         public float y;
-        //public String name;
-        //public Seq<String> connections = Seq.with();
+        public String name;
+        public Seq<String> connections = Seq.with();
     }
 
     public Seq<NodeData> outputData(){
@@ -71,5 +81,10 @@ public class QuestTree {
 
             all.add(node);
         });
+    }
+
+    //For those who want to define their tree in code
+    public void loadDefaults(){
+
     }
 }

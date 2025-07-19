@@ -4,8 +4,15 @@ import florafest.questing.QuestTree;
 import mindustry.content.TechTree;
 
 public class FloraQuests extends QuestTree {
-    public FloraQuests(TechTree.TechNode root) {
-        super(root);
+
+
+    public FloraQuests(String name, TechTree.TechNode root) {
+        super(name, root);
+
+    }
+
+    @Override
+    public void loadDefaults(){
 
         all.addAll(
                 new QuestNode(){{

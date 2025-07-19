@@ -7,6 +7,8 @@ import arc.graphics.gl.Shader;
 import arc.scene.ui.layout.Scl;
 import arc.util.Log;
 import arc.util.Time;
+import florafest.Florafest;
+import florafest.dialog.QuestbookDialog;
 import mindustry.Vars;
 import mindustry.graphics.Shaders;
 import arc.graphics.gl.FrameBuffer;
@@ -17,6 +19,7 @@ import static mindustry.Vars.renderer;
 public class ModShaders {
 
     public static TexturedFogShader fog;
+    public static GridShader grid;
 
     public static NamedShader ice;
     public static boolean loaded = false;
@@ -32,6 +35,7 @@ public class ModShaders {
         try {
             fog = new TexturedFogShader();
             Shaders.fog = fog;
+            grid = new GridShader("grid");
         }
         catch (IllegalArgumentException error){
             loaded = false;
@@ -42,6 +46,24 @@ public class ModShaders {
     public static void dispose(){
         if(!headless && loaded){
             fog.dispose();
+            grid.dispose();
+        }
+    }
+
+    public static class GridShader extends NamedShader{
+        public GridShader(String name){
+            super(name);
+        }
+
+        @Override
+        public void apply() {
+            super.apply();
+            setUniformf("u_resolution",
+                    Core.graphics.getWidth(),
+                    Core.graphics.getHeight()
+            );
+            setUniformf("u_size", Florafest.ui.questbook.view.lastZoom);
+            setUniformf("u_offset", Florafest.ui.questbook.view.panX, Florafest.ui.questbook.view.panY);
         }
     }
 

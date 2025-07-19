@@ -4,10 +4,12 @@ import arc.files.Fi;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.Threads;
 import arc.util.io.Writes;
 import arc.util.serialization.Json;
 import arc.util.serialization.JsonValue;
 import mindustry.Vars;
+import mindustry.io.JsonIO;
 
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
@@ -40,20 +42,40 @@ public class QuestLoader {
     }};
 
     public static void test(){
-        TestingObject2 saving = new TestingObject2(Seq.with(69, 1337));
-        j.toJson(saving, TestingObject2.class, workingDir.child("test.json"));
+        Seq<TestingObject2> saving = Seq.with(new TestingObject2(Seq.with(69, 1337)));
+        j.toJson(saving, Seq.class, TestingObject2.class, workingDir.child("test.json"));
 
-        TestingObject2 output = j.fromJson(TestingObject2.class, workingDir.child("test.json"));
-        Log.info(output.stuff);
+        Seq<TestingObject2> output = j.fromJson(Seq.class, TestingObject2.class, workingDir.child("test.json"));
+        Log.info(output.get(0).stuff);
+
+        /*
+        try {
+            QuestTree.NodeData data = j.fromJson(QuestTree.NodeData.class, workingDir.child("output.json"));
+            Log.info(data.x);
+            Log.info(data.y);
+        }
+        catch(Error e){
+            Log.info(Thread.getAllStackTraces());
+        }
+
+
+         */
+
 
     }
 
     public static void save(QuestTree tree){
-        j.toJson(tree.outputData(), Seq.class, workingDir.child("output.json"));
+        JsonIO.json.toJson(tree.outputData(), Seq.class, QuestTree.NodeData.class, workingDir.child(tree.name + ".json"));
     }
-    public static void load(QuestTree tree){
-        Seq<QuestTree.NodeData> o = (Seq<QuestTree.NodeData>) j.fromJson(Seq.class, workingDir.child("output.json"));
+    public static boolean load(QuestTree tree){
+        Fi questFile = workingDir.child(tree.name + ".json");
+        if(!questFile.exists()) {
+            tree.loadDefaults();
+            return false;
+        }
+        Seq<QuestTree.NodeData> o = JsonIO.json.fromJson(Seq.class, QuestTree.NodeData.class, workingDir.child(tree.name + ".json"));
         tree.load(o);
+        return true;
     }
 
     public static class TestingObject{

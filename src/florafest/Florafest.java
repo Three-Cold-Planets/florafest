@@ -3,10 +3,7 @@ package florafest;
 import arc.Core;
 import arc.Events;
 import arc.struct.Seq;
-import florafest.content.FloraBlocks;
-import florafest.content.FloraItems;
-import florafest.content.FloraQuests;
-import florafest.content.FloraTechTree;
+import florafest.content.*;
 import florafest.dialog.FloraUI;
 import florafest.graphics.ModShaders;
 import florafest.questing.QuestLoader;
@@ -38,10 +35,11 @@ public class Florafest extends Mod{
     @Override
     public void loadContent(){
         //EntityRegistry.register();
+        FloraWeathers.load();
         FloraItems.load();
         FloraBlocks.load();
         FloraTechTree.load();
-        quests = new FloraQuests(FloraTechTree.root);
+        quests = new FloraQuests("centri", FloraTechTree.root);
     }
 
     @Override
@@ -65,5 +63,7 @@ public class Florafest extends Mod{
         });
 
         ui = new FloraUI();
+
+        QuestLoader.load(quests);
     }
 }

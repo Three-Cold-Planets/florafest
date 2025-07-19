@@ -1,7 +1,7 @@
-displayName: m m m m m
-description: Randomass mod
+displayName: Florafest
+description: Sh1p's random repository of wacky ideas
 version: v1.0
-minGameVersion: 146
+minGameVersion: 147
 author: You
 java: true
 main: florafest.Florafest
