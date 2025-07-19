@@ -18,11 +18,10 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
-import arc.scene.ui.Button;
-import arc.scene.ui.Image;
-import arc.scene.ui.ImageButton;
-import arc.scene.ui.TextButton;
+import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.*;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
 import arc.util.*;
 import florafest.Florafest;
 import florafest.content.FloraBlocks;
@@ -32,8 +31,10 @@ import mindustry.content.Blocks;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
 import mindustry.gen.Sounds;
+import mindustry.gen.Tex;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Pal;
+import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.ResearchDialog.TechTreeNode;
 
@@ -267,8 +268,10 @@ public class QuestbookDialog extends BaseDialog {
     }
 
     public class View extends Group{
-        public float panX = 0, panY = -200, lastZoom = -1;
+        public float panX = 0, panY = -iconMed, lastZoom = -1;
         public boolean moved = false;
+
+        public float nodeSize = Scl.scl(120);
 
         //Only for buttons
         public boolean canDrag(){
@@ -292,9 +295,9 @@ public class QuestbookDialog extends BaseDialog {
         }
 
         public void addNode(QuestTree.QuestNode node){
-            ImageButton button = new ImageButton(Blocks.duo.uiIcon, new ImageButton.ImageButtonStyle());
-            button.resizeImage(32f * 2);
+            ImageButton button = new ImageButton(Blocks.duo.uiIcon, Styles.nodei);
             button.getImage().setScaling(Scaling.fit);
+            button.setSize(nodeSize);
 
             button.update(() -> {
                 float offset = (Core.graphics.getHeight() % 2) / 2f;
@@ -306,6 +309,13 @@ public class QuestbookDialog extends BaseDialog {
                 //Log.info(Strings.format("Button X: @, Y: @"), button.x, button.y);
 
                 //Log.info(Strings.format("Dialog X: @, Y: @"), x, y);
+
+                button.getStyle().up = node.data.completed ? Tex.button : Tex.buttonRed;
+
+                ((TextureRegionDrawable)button.getStyle().imageUp).setRegion(node.data.completed ? node.defaultRegion() : Icon.lock.getRegion());
+
+                button.getImage().setColor(node.data.completed ? Color.white : Pal.gray);
+                button.getImage().layout();
             });
 
             button.hovered(() -> {
@@ -319,6 +329,8 @@ public class QuestbookDialog extends BaseDialog {
                         return;
                     }
 
+                    if(!editor) node.data.completed = !node.data.completed;
+
                     hovered = node;
                     button.toFront();
                 }
@@ -327,12 +339,18 @@ public class QuestbookDialog extends BaseDialog {
             button.clicked(() -> {
             });
 
+            button.row();
+            button.defaults().padTop(10);
+
+            button.add(node.data.name).grow();
+
             node.button = button;
             addChild(button);
         }
 
         @Override
         public void drawChildren() {
+            //All the draw code here yoinked from Twcach from Aquarion, then tweaked to work with my own nodes.
             Draw.sort(true);
             float offsetX = panX + width / 2f, offsetY = panY + height / 2f;
             int maxDepth = 10;
@@ -364,11 +382,31 @@ public class QuestbookDialog extends BaseDialog {
             }
             Draw.color();
 
-            //Tmp.v1.set(Core.input.mouse()).sub(Core.graphics.getWidth()/2, Core.graphics.getHeight()/2).scl(width/Core.graphics.getWidth(), height/Core.graphics.getHeight()).scl(1/scaleX, 1/scaleY);
-            Tmp.v1.set(Core.scene.stageToScreenCoordinates(Core.input.mouse()));
-            Fill.circle((Tmp.v1.x + width/2), (Tmp.v1.y + height/2), 40 * scaleX);
+            for (QuestTree.QuestNode node : quest.all) {
+                for (QuestTree.QuestNode child : node.connections) {
+                    if (child.data.hidden) continue;
+                    boolean lock = !node.data.completed;
+                    Draw.z(lock ? 1f : 2f);
 
-
+                    Lines.stroke(Scl.scl(4f), lock ? Pal.darkerGray : Pal.accent);
+                    Draw.alpha(parentAlpha);
+                    float dist = Mathf.dst(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY);
+                    int divisions = Math.max(1, (int) (dist / 20f));
+                    if (lock) {
+                        Lines.dashLine(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY, divisions);
+                    } else {
+                        //Was this actually worth it? I could've done a straight line nothing special
+                        Lines.line(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY);
+                        float progress = (Time.time % (60 * 4)) / (60 * 4);
+                        float arrowX = Mathf.lerp(node.data.x + offsetX, child.data.x + offsetX, progress);
+                        float arrowY = Mathf.lerp(node.data.y + offsetY, child.data.y + offsetY, progress);
+                        float angle = Angles.angle(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY);
+                        float size = 18f;
+                        float base = size * 0.5f;
+                        Drawf.tri(arrowX, arrowY, size, base, angle);
+                    }
+                }
+            }
 
             Draw.sort(false);
             Draw.reset();

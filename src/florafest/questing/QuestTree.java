@@ -2,8 +2,10 @@ package florafest.questing;
 
 import arc.Core;
 import arc.graphics.g2d.TextureRegion;
+import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Button;
 import arc.struct.Seq;
+import mindustry.content.Blocks;
 import mindustry.content.TechTree;
 
 import java.util.UUID;
@@ -35,17 +37,19 @@ public class QuestTree {
             this.data = data;
         }
 
+
         public NodeData data;
 
         //Loaded from data after every node is initialized
-        public Seq<QuestNode> connections;
-        public TextureRegion icon;
+        public Seq<QuestNode> connections = Seq.with();
+        public TextureRegionDrawable icon;
+        public TextureRegion texture;
 
 
         public Button button;
 
-        public TextureRegion defaultIcon(){
-            return Core.atlas.find("duo");
+        public TextureRegion defaultRegion(){
+            return Blocks.duo.uiIcon;
         }
 
         public void setPos(float x, float y){
@@ -58,12 +62,15 @@ public class QuestTree {
 
         public NodeData(){
             name = UUID.randomUUID().toString();
+            connections = Seq.with();
         }
 
         public float x;
         public float y;
         public String name;
-        public Seq<String> connections = Seq.with();
+        public Seq<String> connections;
+        public boolean completed = false;
+        public boolean hidden = false;
     }
 
     public Seq<NodeData> outputData(){
@@ -78,6 +85,10 @@ public class QuestTree {
         all.clear();
         in.each(data -> {
             QuestNode node = new QuestNode(data);
+            node.data.connections.each(c -> {
+                QuestNode other = all.find(n -> n.data.name.equals(c));
+                if(other != null) node.connections.add(other);
+            });
 
             all.add(node);
         });
