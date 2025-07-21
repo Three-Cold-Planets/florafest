@@ -91,7 +91,7 @@ public class FloraBlocks {
         turret.shootType = new ChainLightningBulletType(){{
             lightningColor = Pal.surge;
             range = turret.range;
-            damage = 10;
+            damage = 240;
             distanceDamageFalloff = 0.05f;
             hitSound = Sounds.spark;
             segmentLength = 12;
