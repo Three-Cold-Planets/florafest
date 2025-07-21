@@ -1,11 +1,19 @@
 package florafest.content;
 
 import arc.struct.Seq;
+import florafest.entities.bullet.ChainLightningBulletType;
 import florafest.world.ItemPump;
+import florafest.world.OpenBox;
+import florafest.world.UnitUnloadingPad;
+import mindustry.content.Blocks;
 import mindustry.content.Items;
 import mindustry.content.Liquids;
+import mindustry.entities.bullet.BulletType;
+import mindustry.gen.Sounds;
+import mindustry.graphics.Pal;
 import mindustry.type.Category;
 import mindustry.world.Block;
+import mindustry.world.blocks.defense.turrets.PowerTurret;
 import mindustry.world.blocks.storage.CoreBlock;
 
 import static mindustry.type.ItemStack.with;
@@ -15,7 +23,7 @@ public class FloraBlocks {
             //Cores
             coreCentral,
 
-            pump;
+            pump, openBox, unloadingPad;
 
     public static void load(){
 
@@ -24,7 +32,8 @@ public class FloraBlocks {
                     Category.effect, with(FloraItems.matter, 4000)
             );
 
-            itemCapacity = 400;
+            size = 5;
+            itemCapacity = 2000;
             alwaysUnlocked = true;
         }};
 
@@ -42,6 +51,53 @@ public class FloraBlocks {
             craftTime = 30;
 
             requirements(Category.production, with(Items.copper, 1));
+        }};
+
+        openBox = new OpenBox("open-box"){{
+            size = 3;
+            itemCapacity = 30;
+            produceTime = 120;
+            requirements(
+                    Category.production, with(FloraItems.ash, 30)
+            );
+        }};
+
+        unloadingPad = new UnitUnloadingPad("unloading-pad"){{
+            size = 3;
+            requirements(
+                    Category.distribution, with(FloraItems.ash, 120)
+            );
+        }};
+
+        /*
+        BulletType bullet = ((PowerTurret) Blocks.afflict).shootType;
+        bullet.lightning = 0;
+        bullet.intervalBullet = new ChainLightningBulletType(){{
+            lightningColor = Pal.surge;
+            range = 75;
+            damage = 10;
+            distanceDamageFalloff = 0.05f;
+            hitSound = Sounds.spark;
+        }};
+        bullet.intervalDelay = 8;
+        bullet.intervalBullets = 1;
+        bullet.collides = false;
+        bullet.speed /= 1.5f;
+        bullet.lifetime *= 1.5f;
+         */
+        PowerTurret turret = ((PowerTurret) Blocks.afflict);
+        turret.reload /= 3;
+        turret.shootSound = Sounds.spark;
+        turret.shootType = new ChainLightningBulletType(){{
+            lightningColor = Pal.surge;
+            range = turret.range;
+            damage = 10;
+            distanceDamageFalloff = 0.05f;
+            hitSound = Sounds.spark;
+            segmentLength = 12;
+            targetRange = 16;
+            coils = 3;
+            width = 4;
         }};
     }
 }

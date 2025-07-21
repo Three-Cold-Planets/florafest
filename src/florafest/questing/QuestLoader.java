@@ -12,6 +12,7 @@ import mindustry.Vars;
 import mindustry.io.JsonIO;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
@@ -67,9 +68,11 @@ public class QuestLoader {
     public static void save(QuestTree tree){
         JsonIO.json.toJson(tree.outputData(), Seq.class, QuestTree.NodeData.class, workingDir.child(tree.name + ".json"));
     }
+
     public static boolean load(QuestTree tree){
         Fi questFile = workingDir.child(tree.name + ".json");
-        if(!questFile.exists()) {
+
+        if(questFile.length() == 0) {
             tree.loadDefaults();
             return false;
         }

@@ -33,6 +33,12 @@ public class QuestTree {
             data = new NodeData();
         }
 
+        public QuestNode(String name){
+            super();
+            data = new NodeData();
+            this.data.name = name;
+        }
+
         public QuestNode(NodeData data){
             this.data = data;
         }
@@ -56,7 +62,18 @@ public class QuestTree {
             data.x = x;
             data.y = y;
         }
+
+        public void connect(QuestNode other){
+            connections.add(other);
+            data.connections.add(other.data.name);
+        }
+
+        public void disconnect(QuestNode other){
+            connections.remove(other);
+            data.connections.remove(other.data.name);
+        }
     }
+
 
     public static class NodeData{
 
@@ -84,13 +101,14 @@ public class QuestTree {
     public void load(Seq<NodeData> in){
         all.clear();
         in.each(data -> {
-            QuestNode node = new QuestNode(data);
+            all.add(new QuestNode(data));
+        });
+
+        all.each(node -> {
             node.data.connections.each(c -> {
                 QuestNode other = all.find(n -> n.data.name.equals(c));
                 if(other != null) node.connections.add(other);
             });
-
-            all.add(node);
         });
     }
 

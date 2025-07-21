@@ -9,7 +9,7 @@ public class FloraItems {
 
     public static Seq<Item> all = Seq.with();
 
-    public static Item plastick;
+    public static Item plastick, ash;
 
     //Stupidity begins here
     public static Item matter, fire, earth, air, water, soul,
@@ -18,6 +18,8 @@ public class FloraItems {
 
     public static void load(){
         plastick = new ModItem("plastick");
+
+        ash = new ModItem("ash", Color.valueOf("#5f686b"));
 
         matter = new ModItem("matter", Color.white.cpy());
 

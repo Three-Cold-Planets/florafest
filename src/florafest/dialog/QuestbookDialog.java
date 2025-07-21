@@ -10,6 +10,7 @@ import arc.graphics.g2d.Lines;
 import arc.input.KeyCode;
 import arc.math.Angles;
 import arc.math.Mathf;
+import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.scene.Group;
 import arc.scene.actions.Actions;
@@ -22,6 +23,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.*;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Scl;
+import arc.scene.ui.layout.Table;
 import arc.util.*;
 import florafest.Florafest;
 import florafest.content.FloraBlocks;
@@ -50,6 +52,7 @@ public class QuestbookDialog extends BaseDialog {
     public QuestTree quest;
 
     public QuestTree.QuestNode hovered;
+    public QuestTree.QuestNode connectingNode;
 
     public View view;
 
@@ -58,11 +61,19 @@ public class QuestbookDialog extends BaseDialog {
     public boolean editor;
     public DialogState state = DialogState.regular;
 
+    public Table sideButtons;
+
+    //Only updated when the mouse is down
+    public float mouseX, mouseY;
+
+    public NodeFocusDialog focusDialog;
+
     public static class DialogState{
         boolean dragButtons;
         boolean dragBackground;
+        public String name;
 
-        public DialogState(boolean dragButtons, boolean dragBackground){
+        public DialogState(String name, boolean dragButtons, boolean dragBackground){
 
             this.dragButtons = dragButtons;
             this.dragBackground = dragBackground;
@@ -70,13 +81,20 @@ public class QuestbookDialog extends BaseDialog {
 
         public static DialogState
 
-        regular = new DialogState(true, true),
-        deleting = new DialogState(false, true),
-        connecting = new DialogState(false, true);
+        regular = new DialogState("default", true, true),
+        deleting = new DialogState("deleting", false, true),
+        connecting = new DialogState("connecting", false, true);
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     public QuestbookDialog(){
         super("I am going absolutely insane");
+
+        focusDialog = new NodeFocusDialog("Node Description");
 
         Vars.ui.research.fill(t -> t.update(() -> {
             if (Vars.ui.research.root.node.content == FloraBlocks.coreCentral) {
@@ -170,6 +188,11 @@ public class QuestbookDialog extends BaseDialog {
 
         addCloseButton();
 
+        row();
+
+        sideButtons = new Table();
+        sideButtons.button("Hai", Icon.left, () -> {}).size(64, 64);
+
 
         buttons.button("@add", Icon.left, () -> {
             QuestTree.QuestNode node = new QuestTree.QuestNode();
@@ -185,6 +208,17 @@ public class QuestbookDialog extends BaseDialog {
         });
 
         buttons.add(deleteButton);
+
+        Button connectingButton = new Button(Icon.left);
+        connectingButton.setStyle(Styles.selecti);
+        connectingButton.label(() -> state == DialogState.connecting ? "Connecting: <Y>" : "Connecting: <N>").pad(4).padBottom(0).wrap().growX();
+        connectingButton.clicked(() -> {
+            if(state == DialogState.connecting) state = DialogState.regular;
+            else state = DialogState.connecting;
+        });
+
+        buttons.add(connectingButton);
+
 
         Button editorButton = new Button(Icon.left);
         editorButton.label(() -> editor ? "Editing: <Y>" : "Editing: <N>").pad(4).padBottom(0).wrap().growX();
@@ -235,8 +269,23 @@ public class QuestbookDialog extends BaseDialog {
             }
 
             @Override
+            public void touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                super.touchDown(event, x, y, pointer, button);
+                mouseX = x;
+                mouseY = y;
+            }
+
+            @Override
             public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                 view.lastZoom = view.scaleX;
+
+                if(state == DialogState.connecting && connectingNode != null){
+                    if(hovered != null && connectingNode != hovered) {
+                        if(!connectingNode.connections.contains(hovered)) connectingNode.connect(hovered);
+                        else connectingNode.disconnect(hovered);
+                    }
+                    connectingNode = null;
+                }
                 hovered = null;
             }
 
@@ -321,6 +370,9 @@ public class QuestbookDialog extends BaseDialog {
             button.hovered(() -> {
                 //if(button.isPressed()) canDrag = false;
 
+                hovered = node;
+                button.toFront();
+
                 if(button.isPressed()) {
                     if(state == DialogState.deleting){
                         quest.all.remove(node);
@@ -329,14 +381,18 @@ public class QuestbookDialog extends BaseDialog {
                         return;
                     }
 
-                    if(!editor) node.data.completed = !node.data.completed;
+                    if(state == DialogState.connecting) {
+                        if(connectingNode == null) connectingNode = node;
+                        return;
+                    }
 
-                    hovered = node;
-                    button.toFront();
+                    //if(!editor) node.data.completed = !node.data.completed;
+
                 }
             });
 
             button.clicked(() -> {
+                focusDialog.show(node);
             });
 
             button.row();
@@ -388,29 +444,48 @@ public class QuestbookDialog extends BaseDialog {
                     boolean lock = !node.data.completed;
                     Draw.z(lock ? 1f : 2f);
 
+                    float sourceX = node.data.x + offsetX, sourceY = node.data.y + offsetY;
+                    float targX = child.data.x + offsetX, targY = child.data.y + offsetY;
+
                     Lines.stroke(Scl.scl(4f), lock ? Pal.darkerGray : Pal.accent);
                     Draw.alpha(parentAlpha);
-                    float dist = Mathf.dst(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY);
+                    float dist = Mathf.dst(sourceX, sourceY, targX, targY);
                     int divisions = Math.max(1, (int) (dist / 20f));
                     if (lock) {
-                        Lines.dashLine(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY, divisions);
+                        Lines.dashLine(sourceX, sourceY, targX, targY, divisions);
+                        float prog = Time.time/(60 * 4) % 1;
+                        Tmp.v1.set(sourceX, sourceY).lerp(targX, targY, prog);
+                        Fill.circle(Tmp.v1.x, Tmp.v1.y, 5 + 12 * (1 - Mathf.slope(prog)));
                     } else {
-                        //Was this actually worth it? I could've done a straight line nothing special
-                        Lines.line(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY);
-                        float progress = (Time.time % (60 * 4)) / (60 * 4);
-                        float arrowX = Mathf.lerp(node.data.x + offsetX, child.data.x + offsetX, progress);
-                        float arrowY = Mathf.lerp(node.data.y + offsetY, child.data.y + offsetY, progress);
-                        float angle = Angles.angle(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY);
-                        float size = 18f;
-                        float base = size * 0.5f;
-                        Drawf.tri(arrowX, arrowY, size, base, angle);
+                        drawArrow(node.data.x + offsetX, node.data.y + offsetY, child.data.x + offsetX, child.data.y + offsetY);
                     }
                 }
+            }
+
+            Draw.color(Pal.accent);
+            if(state == DialogState.connecting && connectingNode != null){
+
+                Vec2 pos = screenToLocalCoordinates(Core.input.mouse());
+                if(hovered != null && hovered != connectingNode && hit(pos.x, pos.y, true) == hovered.button){
+                    drawArrow(connectingNode.data.x + offsetX, connectingNode.data.y + offsetY, hovered.data.x + offsetX, hovered.data.y + offsetY);
+                }
+                else drawArrow(connectingNode.data.x + offsetX, connectingNode.data.y + offsetY, pos.x, pos.y);
             }
 
             Draw.sort(false);
             Draw.reset();
             super.drawChildren();
+        }
+
+        void drawArrow(float sourceX, float sourceY, float targX, float targY){
+            Lines.line(sourceX, sourceY, targX, targY);
+            float progress = (Time.time % (60 * 4)) / (60 * 4);
+            float arrowX = Mathf.lerp(sourceX, targX, progress);
+            float arrowY = Mathf.lerp(sourceY, targY, progress);
+            float angle = Angles.angle(sourceX, sourceY, targX, targY);
+            float size = 18f;
+            float base = size * 0.5f;
+            Drawf.tri(arrowX, arrowY, size, base, angle);
         }
     }
 }
