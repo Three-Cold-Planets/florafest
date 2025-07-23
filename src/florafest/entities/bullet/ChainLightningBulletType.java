@@ -98,7 +98,7 @@ public class ChainLightningBulletType extends BulletType {
         }
 
         list.each(u -> {
-            ModDamage.chain(new Vec2(b.x, b.y), u, new IntSeq(), hitSound, hitEffect, b.damage, b.damage, width, distanceDamageFalloff, jumpDamageFactor, branches, segmentLength, arc, coils, lightningColor);
+            ModDamage.chain(new Vec2(b.x, b.y), new Vec2(u.x, u.y), b.team, u, new IntSeq(), hitSound, hitEffect, b.damage, b.damage, collidesTeam, width, distanceDamageFalloff, jumpDamageFactor, branches, segmentLength, arc, coils, lightningColor);
         });
 
         if(charges <= 0) return;
@@ -124,7 +124,8 @@ public class ChainLightningBulletType extends BulletType {
         for (int i = 0; i < builds; i++) {
             Building build = buildings.get(i);
 
-            build.damage(damage);
+            lightningType.create(b.owner, b.team, build.x, build.y, b.angleTo(build), damage * (b.owner instanceof Statusc s ? s.damageMultiplier() : 1), 1f, 1f, b);
+
             Tmp.v1.set(build).add(Tmp.v2.set(Mathf.random(build.block.size), Mathf.random(build.block.size)).scl(0.5f));
             FloraFx.chainLightning.at(Tmp.v1.x, Tmp.v1.y, 0, lightningColor, new LightningHolder(b, Tmp.v1));
             hitEffect.at(build.x, build.y);

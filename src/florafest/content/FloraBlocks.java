@@ -69,22 +69,49 @@ public class FloraBlocks {
             );
         }};
 
-        /*
         BulletType bullet = ((PowerTurret) Blocks.afflict).shootType;
         bullet.lightning = 0;
         bullet.intervalBullet = new ChainLightningBulletType(){{
             lightningColor = Pal.surge;
             range = 75;
-            damage = 10;
-            distanceDamageFalloff = 0.05f;
+            damage = 65;
+            distanceDamageFalloff = 4;
+            jumpDamageFactor = 0.5f;
             hitSound = Sounds.spark;
+            collidesTeam = true;
+            targetRange = 75;
+            segmentLength = 8;
+            coils = 5;
+            width = 4;
         }};
-        bullet.intervalDelay = 8;
+        bullet.fragBullets = 1;
+        bullet.fragBullet = new ChainLightningBulletType(){{
+            lightningColor = Pal.surge;
+            range = 160;
+            damage = 200;
+            distanceDamageFalloff = 2.5f;
+            jumpDamageFactor = 0.95f;
+            hitSound = Sounds.spark;
+            collidesTeam = true;
+            targetRange = 160;
+            segmentLength = 12;
+            coils = 2;
+            width = 4;
+            branches = 3;
+            chainLightning = 6;
+        }};
+
+        bullet.intervalDelay = 20;
+        bullet.bulletInterval = 9;
         bullet.intervalBullets = 1;
+        bullet.scaleLife = true;
         bullet.collides = false;
+        bullet.fragOnAbsorb = false;
         bullet.speed /= 1.5f;
         bullet.lifetime *= 1.5f;
-         */
+        ((PowerTurret) Blocks.afflict).reload *= 2;
+
+        /*
         PowerTurret turret = ((PowerTurret) Blocks.afflict);
         turret.reload /= 3;
         turret.shootSound = Sounds.spark;
@@ -99,5 +126,6 @@ public class FloraBlocks {
             coils = 3;
             width = 4;
         }};
+         */
     }
 }

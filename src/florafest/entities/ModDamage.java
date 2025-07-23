@@ -20,8 +20,9 @@ import mindustry.gen.Unit;
 public class ModDamage {
     public static Seq<Unit> list = new Seq<>();
 
-    public static void chain(Position origin, @Nullable Position targetPos, Team team, Unit current, IntSeq collided, Sound hitSound, Effect hitEffect, float power, float initialPower, float width, float distanceDamageFalloff, float pierceDamageFactor, int branches, float segmentLength, float arc, int coils, Color color){
-        current.damage(power);
+    public static void chain(Position origin, @Nullable Position targetPos, Team team, Unit current, IntSeq collided, Sound hitSound, Effect hitEffect, float power, float initialPower, boolean chainAllied, float width, float distanceDamageFalloff, float pierceDamageFactor, int branches, float segmentLength, float arc, int coils, Color color){
+        if(current.team != team) current.damage(power);
+        else current.heal(power);
         hitSound.at(current.x, current.y, Mathf.random(0.8f, 1.1f));
         //Scales down width based on percent of power left
         float w = width * power/(initialPower);
@@ -77,7 +78,7 @@ public class ModDamage {
             list.clear();
             for (int i = 0; i < Math.min(branches, units.size); i++) {
                 Unit unit = units.get(i);
-                if(collided.contains(unit.id) || !derelict && unit.team.id == teamID) continue;
+                if(collided.contains(unit.id) || !derelict && unit.team.id == teamID && !chainAllied) continue;
                 float dst = unit.dst(current);
                 if(dst > effectiveRange) break;
                 list.add(unit);
@@ -86,14 +87,14 @@ public class ModDamage {
             float numberMultiplier = 1.0f/list.size;
 
             list.each(u -> {
-                float newDamage = power - distanceDamageFalloff * current.dst(u);
+                float newDamage = power - distanceDamageFalloff * (current.dst(u));
                 if(newPower < 0) return;
-                chain(current, u, collided, hitSound, hitEffect, newDamage * numberMultiplier, initialPower, width, distanceDamageFalloff, pierceDamageFactor, branches, segmentLength, arc, coils, color);
+                chain(current, new Vec2(u.x, u.y), team, u, collided, hitSound, hitEffect, newDamage * numberMultiplier, initialPower, chainAllied, width, distanceDamageFalloff, pierceDamageFactor, branches, segmentLength, arc, coils, color);
             });
         });
     }
 
     public static void chain(Position origin, Unit current, IntSeq collided, Sound hitSound, Effect hitEffect, float power, float initialPower, float width, float distanceDamageFalloff, float pierceDamageFactor, int branches, float segmentLength, float arc, int coils, Color color) {
-        chain(origin, null, Team.derelict, current, collided, hitSound, hitEffect, power, initialPower, width, distanceDamageFalloff, pierceDamageFactor, branches, segmentLength, arc, coils, color);
+        chain(origin, null, Team.derelict, current, collided, hitSound, hitEffect, power, initialPower, true, width, distanceDamageFalloff, pierceDamageFactor, branches, segmentLength, arc, coils, color);
     }
 }
