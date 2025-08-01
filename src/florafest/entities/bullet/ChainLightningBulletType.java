@@ -1,5 +1,6 @@
 package florafest.entities.bullet;
 
+import arc.audio.Sound;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
 import arc.math.geom.Position;
@@ -14,7 +15,9 @@ import florafest.graphics.FloraPal;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.core.World;
+import mindustry.entities.Effect;
 import mindustry.entities.bullet.BulletType;
+import mindustry.game.Team;
 import mindustry.gen.*;
 import mindustry.world.Tile;
 
@@ -98,7 +101,7 @@ public class ChainLightningBulletType extends BulletType {
         }
 
         list.each(u -> {
-            ModDamage.chain(new Vec2(b.x, b.y), new Vec2(u.x, u.y), b.team, u, new IntSeq(), hitSound, hitEffect, b.damage, b.damage, collidesTeam, width, distanceDamageFalloff, jumpDamageFactor, branches, segmentLength, arc, coils, lightningColor);
+            ModDamage.chain(b.owner, new Vec2(b.x, b.y), u, b.team, hitSound, hitEffect, b.damage, b.damage, collidesTeam, width, distanceDamageFalloff, jumpDamageFactor, branches, segmentLength, arc, coils, lightningColor, lightningType);
         });
 
         if(charges <= 0) return;

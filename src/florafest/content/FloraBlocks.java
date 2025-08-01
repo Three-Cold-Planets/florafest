@@ -119,12 +119,15 @@ public class FloraBlocks {
             lightningColor = Pal.surge;
             range = turret.range;
             damage = 240;
-            distanceDamageFalloff = 0.05f;
+            distanceDamageFalloff = 0.5f;
+            jumpDamageFactor = 0.8f;
             hitSound = Sounds.spark;
             segmentLength = 12;
             targetRange = 16;
             coils = 3;
             width = 4;
+            collidesTeam = true;
+            branches = 3;
         }};
          */
     }

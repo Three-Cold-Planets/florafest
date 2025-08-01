@@ -8,7 +8,9 @@ import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
+import arc.util.Log;
 import arc.util.Tmp;
+import mindustry.Vars;
 import mindustry.entities.Effect;
 import mindustry.graphics.Drawf;
 import static mindustry.content.Fx.rand;
@@ -19,7 +21,7 @@ public class FloraFx {
 
     public static Effect
 
-            chainLightning = new Effect(15, 300f, e -> {
+            chainLightning = new Effect(15, 500 * 500/2 * Vars.tilesize, e -> {
         if(!(e.data instanceof VisualLightningHolder)) return;
         VisualLightningHolder p = (VisualLightningHolder) e.data;
 
